@@ -14,39 +14,41 @@ dotenv.config();
 let db = null;
 const mongoClient= new MongoClient(process.env.MONGO_URI); 
 
-// app.post("/participants", async (req, res) => {
-//     const newParticipant = {...req.body, lastStatus: Date.now()} ;
+app.post("/participants", async (req, res) => {
+    const newParticipant = {...req.body, lastStatus: Date.now()} ;
 
-//     const participantSchema = joi.object({
-//         name: joi.string().required()
-//     });
+    const participantSchema = joi.object({
+        name: joi.string().required()
+    });
 
-//     const validation = participantSchema.validate(newParticipant);
-//         if(validation.error) {
-//         res.status(422).send(validation.error.details);
-//         mongoClient.close();;
-//     }
+    const validation = participantSchema.validate(newParticipant);
+        if(validation.error) {
+        res.status(422).send(validation.error.details);
+        mongoClient.close();
+    }
 
-//     try{
-//         await mongo
-//         Client.connect();
-//         db = mongoClient.db("batepapouol");
+    try{
+        await mongoClient.connect();
+        db = mongoClient.db("batepapouol");
 
-//         await db.collection("participant").insertOne({...newParticipant, name: new Date().getTime()});
-//         res.status(201);
+        await db.collection("participant").insertOne(newParticipant);
+        res.status(201);
     
-//         mongoClient.close();
-//         if(){
-
-//         } else {
-//         res.status(409).send("Este nome já está em uso, escolha outro!");
-//         mongoClient.close();;
-//         }  
-//       } catch (e) {
-//         res.status(500).send("Ocorreu um erro ao registrar este nome de usuário!", e);
-//         mongoClient.close();
-//       }
-//     });
+        mongoClient.close();
+        let status = {
+            from: user.name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type: 'status',
+            time: dayjs(user.lastStatus).format('HH:mm:ss')
+          }
+          await db.collection('message').insertOne(status);
+          res.status(201);
+        } catch (e) {
+        res.status(500).send("Ocorreu um erro ao registrar este nome de usuário!", e);
+        mongoClient.close();
+      }
+    });
     
 app.get("/participants", async (req, res) => {
     try {
@@ -117,9 +119,11 @@ app.get("/messages", async (req, res) => {
     
         liveMessagesUser = filteredMessages.slice(-liveMessages);
         res.send(liveMessagesUser);
+        mongoClient.close();
 
     } catch (e) {
         res.status(500).send("Ocorreu um erro ao obter as mensagens!", e);
+        mongoClient.close();  
       }
 });
     
