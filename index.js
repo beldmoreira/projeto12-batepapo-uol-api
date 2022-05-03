@@ -63,27 +63,33 @@ app.get("/participants", async (req, res) => {
       }
     });
       
-// app.post("/messages", async (req, res) => {
-//     const newMessage = req.body;
+app.post("/messages", async (req, res) => {
+    const newMessage = { from, ...req.body };
+    const from = req.header('User');
+    const loggedUsers = await db.collection("participant").find().toArray();
+    const loggedUsersCollection = loggedUsers.map(newParticipant => newParticipant.name);
+    
+    const messageSchema = joi.object({
+        from: joi.string().valid(...loggedUsersCollection).required(),
+        to: joi.string().required(),
+        text: joi.string().required(),
+        type: joi.string().valid("message","private_message").required()
+    });
 
-//     const messageSchema = joi.object({
-//         to: joi.string().required(),
-//         text: joi.string().required(),
-//         type: "private_message"
-//     });
+    const validation = messageSchema.validate(newMessage);
+        if(validation.error) {
+        res.status(422).send(validation.error.details);
+        return;
+    }
+    newMessage.time = dayjs(Date.now()).format("HH:mm:ss");
 
-//     const validation = messageSchema.validate(newMessage);
-//         if(validation.error) {
-//         res.status(422).send(validation.error.details);
-//         return;
-//     }
-//     try {
-//       await db.collection("messages").insertOne({...newMessage, });
-//       res.sendStatus(201);
-//     } catch (e) {
-//       res.status(500).send("Ocorreu um erro ao registrar a mensagem!", e);
-//     }
-// });
+    try {
+      await db.collection("messages").insertOne(newMessage);
+      res.sendStatus(201);
+    } catch (e) {
+      res.status(500).send("Ocorreu um erro ao registrar a mensagem!", e);
+    }
+});
 
 // app.get("/messages", async (req, res) => {
 //     try {
