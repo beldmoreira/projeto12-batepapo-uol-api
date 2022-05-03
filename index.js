@@ -37,10 +37,10 @@ app.post("/participants", async (req, res) => {
         mongoClient.close();
         let status = {
             from: user.name,
-            to: 'Todos',
-            text: 'entra na sala...',
-            type: 'status',
-            time: dayjs(user.lastStatus).format('HH:mm:ss')
+            to: "Todos",
+            text: "entra na sala...",
+            type: "status",
+            time: dayjs(user.lastStatus).format("HH:mm:ss")
           }
           await db.collection('message').insertOne(status);
           res.status(201);
