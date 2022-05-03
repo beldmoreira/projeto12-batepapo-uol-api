@@ -24,7 +24,7 @@ const mongoClient= new MongoClient(process.env.MONGO_URI);
 //     const validation = participantSchema.validate(newParticipant);
 //         if(validation.error) {
 //         res.status(422).send(validation.error.details);
-//         return;
+//         mongoClient.close();;
 //     }
 
 //     try{
@@ -33,14 +33,14 @@ const mongoClient= new MongoClient(process.env.MONGO_URI);
 //         db = mongoClient.db("batepapouol");
 
 //         await db.collection("participant").insertOne({...newParticipant, name: new Date().getTime()});
-//         res.sendStatus(201);
+//         res.status(201);
     
 //         mongoClient.close();
 //         if(){
 
 //         } else {
 //         res.status(409).send("Este nome já está em uso, escolha outro!");
-//         return;
+//         mongoClient.close();;
 //         }  
 //       } catch (e) {
 //         res.status(500).send("Ocorreu um erro ao registrar este nome de usuário!", e);
@@ -79,13 +79,13 @@ app.post("/messages", async (req, res) => {
     const validation = messageSchema.validate(newMessage);
         if(validation.error) {
         res.status(422).send(validation.error.details);
-        return;
+        mongoClient.close();
     }
     newMessage.time = dayjs(Date.now()).format("HH:mm:ss");
 
     try {
       await db.collection("messages").insertOne(newMessage);
-      res.sendStatus(201);
+      res.status(201);
     } catch (e) {
       res.status(500).send("Ocorreu um erro ao registrar a mensagem!", e);
     }
@@ -101,13 +101,31 @@ app.post("/messages", async (req, res) => {
 // });
 
 
-// app.post("/status",async (req, res) => {
-//     const status = req.body;
+app.post("/status",async (req, res) => {
+    const user = req.header('User');
 
-  
-
-// });
-
+    if(!user){
+    res.status(400);
+    mongoClient.close();;
+    }
+    try {
+        const loggedUser = await db.collection('participants').findOne({ name: user });
+        if(!loggedUser){
+            res.status(404);
+            mongoClient.close();
+        }
+        let timestamp = Date.now();
+        await db.collection('participants').updateOne(
+            { _id: loggedUser._id  },
+            { $set: { lastStatus: timestamp } }
+        );
+        res.status(200);
+        mongoClient.close();
+        } catch (e) {
+        res.status(500);
+        mongoClient.close();
+        }
+        });
 
 app.delete("/messages/:messageId",async(req,res)=>{
     const {messageId} = req.params.messageId;
@@ -132,8 +150,7 @@ app.delete("/messages/:messageId",async(req,res)=>{
         } catch (e) {
         res.status(500);
         mongoClient.close();
-        }
-        
+        }    
     
 });
 
