@@ -84,23 +84,45 @@ app.post("/messages", async (req, res) => {
     newMessage.time = dayjs(Date.now()).format("HH:mm:ss");
 
     try {
-      await db.collection("messages").insertOne(newMessage);
+      await db.collection("message").insertOne(newMessage);
       res.status(201);
     } catch (e) {
       res.status(500).send("Ocorreu um erro ao registrar a mensagem!", e);
     }
 });
 
-// app.get("/messages", async (req, res) => {
-//     try {
-//         const messages = await db.collection("message").find().toArray();
-//         res.send(messages);
-//       } catch (e) {
-//         res.status(500).send("Ocorreu um erro ao obter as mensagens!", e);
-//       }
-// });
+app.get("/messages", async (req, res) => {
+    try {
+        const messages = await db.collection("message").find().toArray();
+        const loggedUser = req.header('User');
+        const limit = parseInt(req.query.limit);
+        const filteredMessages = messages.filter((message) => {
 
+        if (
+            message.type === 'status' || message.type === 'message' || 
+            message.from === loggedUser || message.to === loggedUser
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }); 
+        let liveMessages;
+        let liveMessagesUser;
+        if(limit === NaN){
+            liveMessages = filteredMessages.length;
+        } else {
+        liveMessages = limit;
+        }
+    
+        liveMessagesUser = filteredMessages.slice(-liveMessages);
+        res.send(liveMessagesUser);
 
+    } catch (e) {
+        res.status(500).send("Ocorreu um erro ao obter as mensagens!", e);
+      }
+});
+    
 app.post("/status",async (req, res) => {
     const user = req.header('User');
 
@@ -135,7 +157,7 @@ app.delete("/messages/:messageId",async(req,res)=>{
         await mongoClient.connect();
         db = mongoClient.db("batepapouol");
 
-        const searchedMessage = await db.collection('messages').findOne({_id: new ObjectId(messageId) });
+        const searchedMessage = await db.collection('message').findOne({_id: new ObjectId(messageId) });
         if(!searchedMessage){
         res.status(404).send("Ocorreu um erro ao deletar a mensagem!", e);
         mongoClient.close();
@@ -145,7 +167,7 @@ app.delete("/messages/:messageId",async(req,res)=>{
         mongoClient.close();
         }
     
-        await db.collection("messages").deleteOne({"id": parseInt(searchedMessage._id)});
+        await db.collection("message").deleteOne({"id": parseInt(searchedMessage._id)});
         res.status(200).send("Mensagem deletada com sucesso!");
         } catch (e) {
         res.status(500);
