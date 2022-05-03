@@ -66,14 +66,14 @@ app.get("/participants", async (req, res) => {
 app.post("/messages", async (req, res) => {
     const newMessage = { from, ...req.body };
     const from = req.header('User');
-    const loggedUsers = await db.collection("participant").find().toArray();
+    const loggedUsers = await db.collection("message").find().toArray();
     const loggedUsersCollection = loggedUsers.map(newParticipant => newParticipant.name);
     
     const messageSchema = joi.object({
         from: joi.string().valid(...loggedUsersCollection).required(),
         to: joi.string().required(),
         text: joi.string().required(),
-        type: joi.string().valid("message","private_message").required()
+        type: joi.string().valid("newMessage","private_message").required()
     });
 
     const validation = messageSchema.validate(newMessage);
@@ -96,7 +96,7 @@ app.post("/messages", async (req, res) => {
 //         const messages = await db.collection("message").find().toArray();
 //         res.send(messages);
 //       } catch (e) {
-//         res.status(500).send("Ocorreu um erro ao obter os participantes!", e);
+//         res.status(500).send("Ocorreu um erro ao obter as mensagens!", e);
 //       }
 // });
 
@@ -109,21 +109,34 @@ app.post("/messages", async (req, res) => {
 // });
 
 
-// app.delete("/messages/messageId",async(req,res)=>{
-//     const {messageId} = req.params;
-//     try {
-//         await mongoClient.connect();
-//         db = mongoClient.db("batepapouol");
+app.delete("/messages/:messageId",async(req,res)=>{
+    const {messageId} = req.params.messageId;
+    const user = req.header('User');
     
-//         await db.collection("messages").deleteOne({"id": parseInt(messageId)});
-//         res.status(200).send("Mensagem deletada com sucesso!");
+    try {
+        await mongoClient.connect();
+        db = mongoClient.db("batepapouol");
+
+        const searchedMessage = await db.collection('messages').findOne({_id: new ObjectId(messageId) });
+        if(!searchedMessage){
+        res.status(404).send("Ocorreu um erro ao deletar a mensagem!", e);
+        mongoClient.close();
+        }
+        if(searchedMessage.from !== user){
+        res.status(401);
+        mongoClient.close();
+        }
     
-//         mongoClient.close();
-//       } catch(e) {
-//         res.status(404).send("Ocorreu um erro ao deletar a mensagem!", e);
-//         mongoClient.close();
-//       }
-// });
+        await db.collection("messages").deleteOne({"id": parseInt(searchedMessage._id)});
+        res.status(200).send("Mensagem deletada com sucesso!");
+        } catch (e) {
+        res.status(500);
+        mongoClient.close();
+        }
+        
+    
+});
+
 
 const port = process.env.PORT || 5000;
 app.listen(port, () => console.log(chalk.bold.green(`Servidor em pé na porta ${port}`)));
