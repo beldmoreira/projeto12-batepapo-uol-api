@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import chalk from 'chalk';
-import {MongoClient} from 'mongodb';
+import {MongoClient, ObjectId} from 'mongodb';
 import dotenv from "dotenv";
 import dayjs from 'dayjs';
 import joi from 'joi';
@@ -15,32 +15,70 @@ let db = null;
 const mongoClient= new MongoClient(process.env.MONGO_URI); 
 
 // app.post("/participants", async (req, res) => {
-//     try{
-//         201
-//         422//erro
-//         409 //nome ja utilizado
+//     const newParticipant = {...req.body, lastStatus: Date.now()} ;
+
+//     const participantSchema = joi.object({
+//         name: joi.string().required()
+//     });
+
+//     const validation = participantSchema.validate(newParticipant);
+//         if(validation.error) {
+//         res.status(422).send(validation.error.details);
+//         return;
 //     }
-// });
 
-// app.get("/participants", async (req, res) => {
-//     try {
-//         await mongoClient.connect();
-//         db = mongoClient.db("partipants");
+//     try{
+//         await mongo
+//         Client.connect();
+//         db = mongoClient.db("batepapouol");
 
-//         const participants = await db.collection("participant").find().toArray();
-//         res.send(participant);
-
+//         await db.collection("participant").insertOne({...newParticipant, name: new Date().getTime()});
+//         res.sendStatus(201);
+    
 //         mongoClient.close();
+//         if(){
+
+//         } else {
+//         res.status(409).send("Este nome já está em uso, escolha outro!");
+//         return;
+//         }  
 //       } catch (e) {
-//         res.status(500).send("Ocorreu um erro ao obter os participantes!", e);
+//         res.status(500).send("Ocorreu um erro ao registrar este nome de usuário!", e);
 //         mongoClient.close();
 //       }
 //     });
+    
+app.get("/participants", async (req, res) => {
+    try {
+        await mongoClient.connect();
+        db = mongoClient.db("batepapouol");
+
+        const participants = await db.collection("participant").find().toArray();
+        res.send(participants);
+
+        mongoClient.close();
+      } catch (e) {
+        res.status(500).send("Ocorreu um erro ao obter os participantes!", e);
+        mongoClient.close();
+      }
+    });
       
 // app.post("/messages", async (req, res) => {
 //     const newMessage = req.body;
+
+//     const messageSchema = joi.object({
+//         to: joi.string().required(),
+//         text: joi.string().required(),
+//         type: "private_message"
+//     });
+
+//     const validation = messageSchema.validate(newMessage);
+//         if(validation.error) {
+//         res.status(422).send(validation.error.details);
+//         return;
+//     }
 //     try {
-//     //   await db.collection("messages").insertOne({...newMessage, id: new Date().getTime()});
+//       await db.collection("messages").insertOne({...newMessage, });
 //       res.sendStatus(201);
 //     } catch (e) {
 //       res.status(500).send("Ocorreu um erro ao registrar a mensagem!", e);
@@ -58,7 +96,27 @@ const mongoClient= new MongoClient(process.env.MONGO_URI);
 
 
 // app.post("/status",async (req, res) => {
+//     const status = req.body;
 
+  
+
+// });
+
+
+// app.delete("/messages/messageId",async(req,res)=>{
+//     const {messageId} = req.params;
+//     try {
+//         await mongoClient.connect();
+//         db = mongoClient.db("batepapouol");
+    
+//         await db.collection("messages").deleteOne({"id": parseInt(messageId)});
+//         res.status(200).send("Mensagem deletada com sucesso!");
+    
+//         mongoClient.close();
+//       } catch(e) {
+//         res.status(404).send("Ocorreu um erro ao deletar a mensagem!", e);
+//         mongoClient.close();
+//       }
 // });
 
 const port = process.env.PORT || 5000;
